@@ -1,0 +1,885 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LuthorCorp — Base confidentielle</title>
+
+<style>
+:root {
+  --fond:#07100e;
+  --panneau:#101d19;
+  --vert:#8ae6ad;
+  --bord:#355a49;
+  --rouge:#ff7777;
+}
+
+* { box-sizing:border-box; }
+
+body {
+  margin:0;
+  background:var(--fond);
+  color:#d5e8da;
+  font:16px "Courier New",monospace;
+}
+
+header {
+  border-bottom:2px solid var(--bord);
+  padding:20px;
+  text-align:center;
+}
+
+.logo {
+  font-size:clamp(25px,6vw,43px);
+  font-weight:bold;
+  letter-spacing:3px;
+  color:var(--vert);
+}
+
+.sous {
+  font-size:12px;
+  letter-spacing:2px;
+  margin-top:10px;
+}
+
+main {
+  max-width:950px;
+  margin:auto;
+  padding:20px;
+}
+
+h1,h2 { color:var(--vert); }
+h1 { font-size:22px; }
+p { line-height:1.6; }
+
+.panel {
+  background:var(--panneau);
+  border:1px solid var(--bord);
+  padding:20px;
+  margin:20px 0;
+}
+
+.timer {
+  font-size:clamp(42px,10vw,80px);
+  color:var(--vert);
+  text-align:center;
+  font-weight:bold;
+}
+
+.center { text-align:center; }
+.danger { color:var(--rouge); }
+.small { font-size:12px;color:#a8bdb0; }
+
+input,textarea,button,select {
+  font:inherit;
+  border-radius:0;
+}
+
+input,textarea,select {
+  background:#07100e;
+  color:white;
+  border:1px solid var(--bord);
+  padding:13px;
+  width:100%;
+}
+
+textarea {
+  min-height:110px;
+  resize:vertical;
+}
+
+button {
+  background:#244a35;
+  color:white;
+  border:1px solid var(--vert);
+  padding:12px 18px;
+  cursor:pointer;
+}
+
+button:hover { background:#376c4c; }
+button:disabled { opacity:.4;cursor:not-allowed; }
+
+.entry {
+  display:flex;
+  gap:10px;
+}
+
+.entry input { flex:1;min-width:0; }
+
+#message {
+  min-height:24px;
+  margin-top:12px;
+}
+
+.hidden { display:none!important; }
+.back { margin-bottom:15px; }
+
+.media {
+  width:100%;
+  max-height:450px;
+  background:black;
+  margin:12px 0;
+  object-fit:contain;
+}
+
+.doc {
+  border:1px solid var(--bord);
+  padding:15px;
+  margin:15px 0;
+}
+
+label {
+  display:block;
+  margin:14px 0 5px;
+  color:var(--vert);
+}
+
+.grid {
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:12px;
+}
+
+@media(max-width:650px) {
+  .grid { grid-template-columns:1fr; }
+}
+
+footer {
+  text-align:center;
+  padding:25px;
+  font-size:11px;
+  color:#799482;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="logo">LUTHORCORP</div>
+  <div class="sous">SYSTÈME CENTRAL DE SURVEILLANCE</div>
+  <div class="sous danger">ACCÈS NON AUTORISÉ DÉTECTÉ</div>
+</header>
+
+<main>
+
+<section class="panel">
+  <div class="center small">
+    TEMPS RESTANT AVANT VERROUILLAGE
+  </div>
+  <div id="timer" class="timer">45:00</div>
+  <p id="status" class="center danger">
+    Votre connexion a été détectée.
+    Le protocole de sécurité est activé.
+  </p>
+</section>
+
+<section id="accueil" class="panel">
+  <h1>TERMINAL D'ACCÈS</h1>
+
+  <p>
+    Système de recherche dans les archives
+    confidentielles de LuthorCorp.
+  </p>
+
+  <p class="small">
+    Saisissez une référence d'archive pour
+    consulter les données correspondantes.
+  </p>
+
+  <div style="height:65px"></div>
+
+  <label for="recherche">RÉFÉRENCE OU CODE D'ACCÈS</label>
+
+  <div class="entry">
+    <input id="recherche"
+           autocomplete="off"
+           placeholder="Saisir un code...">
+    <button onclick="rechercher()">OK</button>
+  </div>
+
+  <div id="message" role="status"></div>
+
+  <p class="small danger">
+    ATTENTION : toute tentative d'accès incorrecte
+    entraîne une pénalité de sécurité de 60 secondes.
+  </p>
+</section>
+
+<section id="archive" class="panel hidden">
+  <button class="back" onclick="retour()">← RETOUR</button>
+  <h1 id="archiveTitre"></h1>
+  <p id="archiveDescription"></p>
+  <div id="archiveContenu"></div>
+</section>
+
+<section id="dossiers" class="panel hidden">
+  <button class="back" onclick="retour()">← RETOUR</button>
+  <h1>DOSSIER 700 — ARCHIVES CONFIDENTIELLES</h1>
+  <p>Répertoire des documents classifiés.</p>
+  <div id="listeDossiers"></div>
+</section>
+
+<section id="administration" class="panel hidden">
+  <button class="back" onclick="retour()">← RETOUR</button>
+
+  <h1>ADMINISTRATION — ACCÈS 1014</h1>
+  <p class="small">Configuration réservée à l'organisatrice.</p>
+
+  <div class="panel">
+    <h2>Contrôle du compte à rebours</h2>
+
+    <div class="grid">
+      <button onclick="ajouterTemps(5)">+ 5 minutes</button>
+      <button onclick="ajouterTemps(10)">+ 10 minutes</button>
+      <button onclick="ajouterTemps(15)">+ 15 minutes</button>
+      <button onclick="reinitialiser()">
+        Réinitialiser à 45 minutes
+      </button>
+    </div>
+
+    <p class="small">
+      Le chronomètre est mémorisé sur cet appareil.
+      La réinitialisation demande confirmation.
+    </p>
+  </div>
+
+  <div class="panel">
+    <h2>Modifier les archives</h2>
+
+    <label>Choisir une archive</label>
+    <select id="editArchive" onchange="chargerEdition()">
+      <option value="3004">3004 — Laboratoire</option>
+      <option value="467">467 — Bureau du coach</option>
+      <option value="109">109 — Appartement</option>
+    </select>
+
+    <label>Titre</label>
+    <input id="editTitre">
+
+    <label>Description</label>
+    <textarea id="editDescription"></textarea>
+
+    <label>Adresse de la vidéo (MP4)</label>
+    <input id="editVideo" placeholder="https://...">
+
+    <label>Adresses des photographies (une par ligne)</label>
+    <textarea id="editPhotos"></textarea>
+
+    <label>Texte complémentaire</label>
+    <textarea id="editTexte"></textarea>
+
+    <button onclick="sauverArchive()">
+      ENREGISTRER L'ARCHIVE
+    </button>
+  </div>
+
+  <div class="panel">
+    <h2>Documents du dossier 700</h2>
+
+    <p class="small">
+      Chaque document possède son propre mot mystère.
+    </p>
+
+    <label>Choisir un document</label>
+    <select id="editDocument"
+            onchange="chargerDocument()"></select>
+
+    <label>Nom du document</label>
+    <input id="docTitre">
+
+    <label>Mot mystère</label>
+    <input id="docCode">
+
+    <label>Contenu du document</label>
+    <textarea id="docTexte" rows="8"></textarea>
+
+    <label>Adresse d'une image ou photographie</label>
+    <input id="docImage">
+
+    <button onclick="sauverDocument()">
+      ENREGISTRER LE DOCUMENT
+    </button>
+
+    <button onclick="nouveauDocument()">
+      + NOUVEAU DOCUMENT
+    </button>
+
+    <button onclick="supprimerDocument()">
+      SUPPRIMER CE DOCUMENT
+    </button>
+  </div>
+
+  <div class="panel">
+    <h2>Publication</h2>
+
+    <p>
+      Les modifications sont conservées dans ce navigateur.
+      Pour les publier sur GitHub, exporte un nouveau fichier HTML.
+    </p>
+
+    <button onclick="exporterHTML()">
+      EXPORTER LE SITE HTML
+    </button>
+
+    <button onclick="exporterJSON()">
+      SAUVEGARDE JSON
+    </button>
+
+    <label>Importer une sauvegarde JSON</label>
+    <input type="file"
+           accept=".json,application/json"
+           onchange="importerJSON(event)">
+  </div>
+</section>
+
+<section id="verrouillage" class="panel hidden center">
+  <h1 class="danger">CONNEXION BLOQUÉE</h1>
+
+  <p>Le délai de sécurité est expiré.</p>
+  <p>Tous les accès aux archives ont été suspendus.</p>
+
+  <p class="small">
+    TERMINAL VERROUILLÉ — LUTHORCORP
+  </p>
+
+  <label>ACCÈS DE MAINTENANCE</label>
+
+  <div class="entry">
+    <input id="maintenance" placeholder="Code">
+    <button onclick="maintenance()">OK</button>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  LUTHORCORP © 2004 — DONNÉES CONFIDENTIELLES
+</footer>
+
+<script id="donneesPubliees" type="application/json">
+{
+  "archives": {
+    "3004": {
+      "titre": "CAMÉRA 3004 — LABORATOIRE LUTHORCORP",
+      "description": "Archives de vidéosurveillance du laboratoire.",
+      "video": "",
+      "photos": [],
+      "texte": "Aucun enregistrement chargé."
+    },
+    "467": {
+      "titre": "CAMÉRA 467 — BUREAU DU COACH",
+      "description": "Archives de vidéosurveillance du lycée.",
+      "video": "",
+      "photos": [],
+      "texte": "Aucun enregistrement chargé."
+    },
+    "109": {
+      "titre": "ARCHIVE 109 — APPARTEMENT DE LANA ET JASON",
+      "description": "Documents et enregistrements associés à l'appartement.",
+      "video": "",
+      "photos": [],
+      "texte": "Aucun enregistrement chargé."
+    }
+  },
+  "documents": [
+    {
+      "titre": "Rapport scientifique",
+      "code": "serum",
+      "texte": "Document confidentiel à compléter.",
+      "image": ""
+    }
+  ]
+}
+</script>
+
+<script>
+"use strict";
+
+const CLE_DONNEES = "luthorcorp_donnees_v1";
+const CLE_FIN = "luthorcorp_fin_v1";
+
+const ADMIN = "1014";
+const BONUS = "12";
+
+const $ = id => document.getElementById(id);
+
+let donnees;
+
+try {
+  donnees = JSON.parse(
+    localStorage.getItem(CLE_DONNEES) ||
+    document.getElementById("donneesPubliees").textContent
+  );
+} catch(e) {
+  alert("Erreur de chargement des données.");
+}
+
+let fin = Number(localStorage.getItem(CLE_FIN));
+
+if (!fin || !Number.isFinite(fin)) {
+  fin = Date.now() + 45 * 60 * 1000;
+  localStorage.setItem(CLE_FIN, String(fin));
+}
+
+function tempsRestant() {
+  return Math.max(0, Math.ceil((fin-Date.now())/1000));
+}
+
+function afficherTemps() {
+  const secondes = tempsRestant();
+  const m = Math.floor(secondes/60);
+  const s = secondes%60;
+
+  $("timer").textContent =
+    String(m).padStart(2,"0")+":"+
+    String(s).padStart(2,"0");
+
+  $("timer").style.color =
+    secondes<=300 ? "#ff7777" : "#8ae6ad";
+
+  if (secondes===0) {
+    $("status").textContent =
+      "PROTOCOLE TERMINÉ — CONNEXION SUSPENDUE";
+
+    if (!$("administration").classList.contains("hidden")) {
+      return;
+    }
+
+    afficherSection("verrouillage");
+  } else {
+    $("status").textContent =
+      "Votre connexion a été détectée. Le protocole de sécurité est activé.";
+
+    if (!$("verrouillage").classList.contains("hidden")) {
+      afficherSection("accueil");
+    }
+  }
+}
+
+function afficherSection(id) {
+  ["accueil","archive","dossiers","administration","verrouillage"]
+    .forEach(n => $(n).classList.add("hidden"));
+
+  $(id).classList.remove("hidden");
+}
+
+function retour() {
+  afficherSection(
+    tempsRestant()>0 ? "accueil" : "verrouillage"
+  );
+}
+
+function normaliser(s) {
+  return String(s).trim().toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g,"");
+}
+
+function rechercher() {
+  const code = normaliser($("recherche").value);
+
+  $("recherche").value="";
+  $("message").textContent="";
+
+  // CODE ADMINISTRATRICE : 1014
+  if (code===ADMIN) {
+    ouvrirAdmin();
+    return;
+  }
+
+  // CODE BONUS : 12 = + 10 MINUTES
+  if (code===BONUS) {
+    ajouterTemps(10);
+
+    $("message").textContent =
+      "ERREUR DU SYSTÈME DE SÉCURITÉ — VERROUILLAGE RETARDÉ DE 10 MINUTES";
+
+    $("message").className="";
+    return;
+  }
+
+  if (tempsRestant()<=0) {
+    afficherSection("verrouillage");
+    return;
+  }
+
+  if (donnees.archives[code]) {
+    ouvrirArchive(code);
+    return;
+  }
+
+  if (code==="700") {
+    ouvrirDossiers();
+    return;
+  }
+
+  // CODE INCORRECT : - 1 MINUTE
+  fin -= 60000;
+  localStorage.setItem(CLE_FIN,String(fin));
+
+  $("message").textContent =
+    "CODE INCORRECT — PÉNALITÉ : 1 MINUTE";
+
+  $("message").className="danger";
+  afficherTemps();
+}
+
+$("recherche").addEventListener("keydown",e=>{
+  if(e.key==="Enter") rechercher();
+});
+
+function ajouterTexte(parent,texte,classe="") {
+  const p=document.createElement("p");
+  p.textContent=texte;
+  if(classe) p.className=classe;
+  parent.appendChild(p);
+}
+
+function ajouterImage(parent,url) {
+  if(!url) return;
+
+  const img=document.createElement("img");
+  img.src=url;
+  img.className="media";
+  img.alt="Photographie d'archive";
+
+  parent.appendChild(img);
+}
+
+function ajouterVideo(parent,url) {
+  if(!url) return;
+
+  const v=document.createElement("video");
+  v.controls=true;
+  v.className="media";
+  v.src=url;
+
+  parent.appendChild(v);
+}
+
+function ouvrirArchive(code) {
+  if(tempsRestant()<=0) return;
+
+  const a=donnees.archives[code];
+
+  $("archiveTitre").textContent=a.titre;
+  $("archiveDescription").textContent=a.description;
+
+  const contenu=$("archiveContenu");
+  contenu.replaceChildren();
+
+  ajouterVideo(contenu,a.video);
+
+  (a.photos||[]).forEach(url=>{
+    ajouterImage(contenu,url);
+  });
+
+  ajouterTexte(contenu,a.texte||"");
+
+  afficherSection("archive");
+}
+
+function ouvrirDossiers() {
+  if(tempsRestant()<=0) return;
+
+  const zone=$("listeDossiers");
+  zone.replaceChildren();
+
+  donnees.documents.forEach((doc,index)=>{
+    const bloc=document.createElement("div");
+    bloc.className="doc";
+
+    const titre=document.createElement("h2");
+    titre.textContent="🔒 "+doc.titre;
+    bloc.appendChild(titre);
+
+    const input=document.createElement("input");
+    input.placeholder="Mot mystère";
+    input.autocomplete="off";
+    bloc.appendChild(input);
+
+    const bouton=document.createElement("button");
+    bouton.textContent="DÉVERROUILLER";
+    bloc.appendChild(bouton);
+
+    const resultat=document.createElement("div");
+    bloc.appendChild(resultat);
+
+    function essayer() {
+      if(tempsRestant()<=0) return;
+
+      if(normaliser(input.value)===normaliser(doc.code)) {
+        resultat.replaceChildren();
+
+        ajouterTexte(resultat,doc.texte);
+        ajouterImage(resultat,doc.image);
+
+        input.disabled=true;
+        bouton.disabled=true;
+        titre.textContent="🔓 "+doc.titre;
+      } else {
+        fin-=60000;
+        localStorage.setItem(CLE_FIN,String(fin));
+
+        resultat.replaceChildren();
+
+        ajouterTexte(
+          resultat,
+          "MOT INCORRECT — 1 MINUTE RETIRÉE",
+          "danger"
+        );
+
+        afficherTemps();
+      }
+    }
+
+    bouton.onclick=essayer;
+
+    input.addEventListener("keydown",e=>{
+      if(e.key==="Enter") essayer();
+    });
+
+    zone.appendChild(bloc);
+  });
+
+  afficherSection("dossiers");
+}
+
+function maintenance() {
+  const code = $("maintenance").value.trim();
+  $("maintenance").value="";
+
+  if (code===ADMIN) {
+    ouvrirAdmin();
+    return;
+  }
+
+  if (code===BONUS) {
+    ajouterTemps(10);
+    afficherSection("accueil");
+    return;
+  }
+}
+
+function ouvrirAdmin() {
+  chargerEdition();
+  remplirListeDocuments();
+  afficherSection("administration");
+}
+
+function ajouterTemps(minutes) {
+  fin=Math.max(fin,Date.now())+minutes*60000;
+
+  localStorage.setItem(CLE_FIN,String(fin));
+  afficherTemps();
+
+  alert(
+    "ERREUR DU SYSTÈME DE SÉCURITÉ\n" +
+    "Verrouillage retardé de " + minutes + " minutes."
+  );
+}
+
+function reinitialiser() {
+  if(!confirm(
+    "Réinitialiser le compte à rebours à 45 minutes ?"
+  )) return;
+
+  fin=Date.now()+45*60000;
+
+  localStorage.setItem(CLE_FIN,String(fin));
+  afficherTemps();
+
+  alert("Compte à rebours réinitialisé.");
+}
+
+function chargerEdition() {
+  const a=donnees.archives[$("editArchive").value];
+
+  $("editTitre").value=a.titre||"";
+  $("editDescription").value=a.description||"";
+  $("editVideo").value=a.video||"";
+  $("editPhotos").value=(a.photos||[]).join("\n");
+  $("editTexte").value=a.texte||"";
+}
+
+function sauverArchive() {
+  const code=$("editArchive").value;
+
+  donnees.archives[code]={
+    titre:$("editTitre").value,
+    description:$("editDescription").value,
+    video:$("editVideo").value.trim(),
+    photos:$("editPhotos").value.split("\n")
+      .map(s=>s.trim()).filter(Boolean),
+    texte:$("editTexte").value
+  };
+
+  sauvegarder();
+  alert("Archive enregistrée.");
+}
+
+function remplirListeDocuments(selection=0) {
+  const select=$("editDocument");
+  select.replaceChildren();
+
+  donnees.documents.forEach((doc,i)=>{
+    const option=document.createElement("option");
+    option.value=i;
+    option.textContent=doc.titre;
+    select.appendChild(option);
+  });
+
+  if(donnees.documents.length) {
+    select.value=Math.min(
+      selection,
+      donnees.documents.length-1
+    );
+    chargerDocument();
+  } else {
+    ["docTitre","docCode","docTexte","docImage"]
+      .forEach(id=>$(id).value="");
+  }
+}
+
+function chargerDocument() {
+  const d=donnees.documents[
+    Number($("editDocument").value)
+  ];
+
+  if(!d) return;
+
+  $("docTitre").value=d.titre||"";
+  $("docCode").value=d.code||"";
+  $("docTexte").value=d.texte||"";
+  $("docImage").value=d.image||"";
+}
+
+function sauverDocument() {
+  const i=Number($("editDocument").value);
+
+  if(!donnees.documents[i]) return;
+
+  donnees.documents[i]={
+    titre:$("docTitre").value,
+    code:$("docCode").value,
+    texte:$("docTexte").value,
+    image:$("docImage").value.trim()
+  };
+
+  sauvegarder();
+  remplirListeDocuments(i);
+
+  alert("Document enregistré.");
+}
+
+function nouveauDocument() {
+  donnees.documents.push({
+    titre:"Nouveau document",
+    code:"nouveau",
+    texte:"",
+    image:""
+  });
+
+  sauvegarder();
+  remplirListeDocuments(donnees.documents.length-1);
+}
+
+function supprimerDocument() {
+  const i=Number($("editDocument").value);
+
+  if(!donnees.documents[i]) return;
+  if(!confirm("Supprimer ce document ?")) return;
+
+  donnees.documents.splice(i,1);
+
+  sauvegarder();
+  remplirListeDocuments();
+}
+
+function sauvegarder() {
+  localStorage.setItem(
+    CLE_DONNEES,
+    JSON.stringify(donnees)
+  );
+}
+
+function telecharger(nom,contenu,type) {
+  const blob=new Blob([contenu],{type});
+  const url=URL.createObjectURL(blob);
+
+  const lien=document.createElement("a");
+  lien.href=url;
+  lien.download=nom;
+
+  document.body.appendChild(lien);
+  lien.click();
+  lien.remove();
+
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+function exporterJSON() {
+  telecharger(
+    "luthorcorp-sauvegarde.json",
+    JSON.stringify(donnees,null,2),
+    "application/json"
+  );
+}
+
+function importerJSON(event) {
+  const fichier=event.target.files[0];
+  if(!fichier) return;
+
+  const lecteur=new FileReader();
+
+  lecteur.onload=()=>{
+    try {
+      const objet=JSON.parse(lecteur.result);
+
+      if(
+        !objet.archives ||
+        !Array.isArray(objet.documents)
+      ) {
+        throw new Error("Format invalide");
+      }
+
+      donnees=objet;
+      sauvegarder();
+
+      chargerEdition();
+      remplirListeDocuments();
+
+      alert("Sauvegarde importée.");
+    } catch(e) {
+      alert("Impossible d'importer ce fichier.");
+    }
+  };
+
+  lecteur.readAsText(fichier);
+  event.target.value="";
+}
+
+function exporterHTML() {
+  const copie=document.documentElement.cloneNode(true);
+  const script=copie.querySelector("#donneesPubliees");
+
+  script.textContent=JSON.stringify(donnees,null,2)
+    .replace(/</g,"\\u003c");
+
+  const html="<!DOCTYPE html>\n"+copie.outerHTML;
+
+  telecharger(
+    "index.html",
+    html,
+    "text/html;charset=utf-8"
+  );
+}
+
+setInterval(afficherTemps,1000);
+afficherTemps();
+
+</script>
+</body>
+</html>
